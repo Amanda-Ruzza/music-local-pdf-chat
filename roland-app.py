@@ -33,9 +33,6 @@ load_dotenv()
     # create docstrings for the functions
 
 # TODO:
-# If the processed PDF return an empty list of vectors, in other words, the code didn't break , but it didn't extract the text, then convert it to JPG , and do the OCR with pytesseract
-
-# TODO:
 # Create a 'Clear Chat History' function/button
 
 # TODO:

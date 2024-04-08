@@ -1,5 +1,6 @@
 import logging
 import tempfile
+from time import sleep
 from os import getenv, getcwd, path 
 from io import BytesIO, BufferedReader
 import streamlit as st
@@ -42,7 +43,7 @@ load_dotenv()
 # Move the 'user question' + bot question functionalities from the html to ST, then create a spinning wheel inside the bot question box to let the user know that the bot is thinking
 
 # TODO:
-# Create a 'processing' bar/message while the program is reading the PDFs so the user know what's going on
+# Add time execution functionality and send the results to the logger
     
 
 def ocr_on_pdf(pdf_path):
@@ -195,69 +196,30 @@ def main():
             with st.spinner("Processing"):
                 # Create a progress bar
                 progress_text = "Processing PDFs..."
-                progress_bar = st.progress(0, text=progress_text)
+                progress_bar = st.empty()
                 
                 # Calculate the total number of PDFs for processing
                 total_pdfs = len(pdf_docs)
                 
                 # Iterate through each PDF and update the progress bar accordingly
                 for i, pdf in enumerate(pdf_docs):
-                    # Update progress bar
-                    progress_bar.progress((i + 1) / total_pdfs, text=progress_text)
+                # Calculate progress percentage
+                    progress_percent = (i + 1) / total_pdfs
+                
+                # Update progress bar
+                    progress_bar.progress(progress_percent, text=progress_text)
+                
                     
                     # Process PDF here
                     raw_text = get_pdf_text([pdf])
                     text_chunks = get_text_chunks(raw_text)
                     vectorstore = get_vectorstore(text_chunks)
                     st.session_state.conversation = get_conversation_chain(vectorstore)
-                
+                    # Add Progress Bar delay
+                    sleep(4.0)
                 # Empty the progress bar after processing
                 progress_bar.empty()
 
-
-# def main():
-#     # Streamlit GUI - Page Configuration:
-#     st.set_page_config(page_title="Chat with Roland Gear PDF Manuals", page_icon=":notes:")
     
-#     # Adding the CSS template here:
-#     st.write(css, unsafe_allow_html=True)
-
-#     if "conversation" not in st.session_state:
-#         st.session_state.conversation = None
-
-#     # Initializing Streamlit chat history session state
-#     if "chat_history" not in st.session_state:
-#         st.session_state.chat_history = None
-
-#     st.header("Chat with Roland Gear PDF Manuals :notes:")
-#     # Store the value from the user input question
-#     user_question = st.text_input("Ask me a question about any Roland music equipment that can be answered from one of the official manuals:")
-#     if user_question:
-#         handle_userinput(user_question)
-
-    
-#     # adding a sidebar where the user can upload PDFs:
-#     with st.sidebar:
-#         st.subheader("Your Roland Manuals")
-#         pdf_docs = st.file_uploader("Upload your PDFs here and click 'Process PDF'", accept_multiple_files=True)
-#         if st.button("Process PDF"):
-#             with st.spinner("Processing"):
-#                 # get pdf text
-#                 raw_text = get_pdf_text(pdf_docs)
-                
-#                 # get the text chunks
-#                 text_chunks = get_text_chunks(raw_text)
-#                 st.write(text_chunks)
-                
-#                 # create vector store embeddings with OpenAi 
-#                 vectorstore = get_vectorstore(text_chunks)
-
-#                 # create conversation chain
-#                 # This conversation object takes the history of the conversation and returns the next element of the conversation
-#                 # `st.session_state` saves the conversation in a variable and tells streamlit to keep this in the session state, so the conversation memory is not lost during and changes in the GUI
-#                 st.session_state.conversation = get_conversation_chain(vectorstore)
-    
-   
-
 if __name__ == '__main__':
     main()

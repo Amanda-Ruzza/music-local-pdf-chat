@@ -1,5 +1,7 @@
 import logging
+import tempfile
 from os import getenv, getcwd, path 
+from io import BytesIO, BufferedReader
 import streamlit as st
 from dotenv import load_dotenv 
 from PyPDF2 import PdfReader
@@ -24,13 +26,9 @@ logging.basicConfig(
     handlers=[logging.FileHandler(log_file_path)]
 )
 
-# Enable API Keys and DB Connection strings from the `.env` file
+# Enable API Keys, DB + Tesseract connection strings from the `.env` file
 load_dotenv()
 
-pytesseract.pytesseract.tesseract_cmd = r"{}".format(getenv("TESSERACT_PATH"))
-print(f"Tesseract Path: {pytesseract.pytesseract.tesseract_cmd}")
-# TODO'S: 
-    # - install PDFMu to deal with AES encrypted files such as 'GR-55_OM.pdf'
 # TODO:
     # create docstrings for the functions
 
@@ -50,14 +48,62 @@ print(f"Tesseract Path: {pytesseract.pytesseract.tesseract_cmd}")
 # Create a 'processing' bar/message while the program is reading the PDFs so the user know what's going on
     
 
+def ocr_on_pdf(pdf_path):
+    try:
+        pytesseract.pytesseract.tesseract_cmd = r"{}".format(getenv("TESSERACT_PATH"))
+        logging.info(f"Tesseract Path: {pytesseract.pytesseract.tesseract_cmd}")
+        # Convert PDF to images
+        images = convert_from_path(pdf_path)
+
+        # Initialize an empty string to store the extracted text
+        extracted_text = ""
+
+        # Loop through each image and extract text
+        for image in images:
+            text = pytesseract.image_to_string(image)
+            extracted_text += text + '\n'
+
+        return extracted_text
+    except Exception as e:
+        logging.error(f"Error converting PDF to images: {e}")
+        return ""
+
 # extract text from PDF
+
 def get_pdf_text(pdf_docs):
     text = ""
+    pdf_texts = [] 
+
     for pdf in pdf_docs:
-        pdf_reader = PdfReader(pdf)
+        # Save the contents of the uploaded PDF to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False) as temp_pdf:
+            temp_pdf.write(pdf.read())
+            temp_pdf_path = temp_pdf.name
+        
+        pdf_reader = PdfReader(temp_pdf_path)
+        text_from_pdf = ""
         for page in pdf_reader.pages:
-            text += page.extract_text()
-    return text 
+            text_from_pdf += page.extract_text()
+
+        pdf_texts.append((temp_pdf_path, text_from_pdf))
+        logging.info(f"This is the size of the appended `pdf_texts` list: {len(pdf_texts)}")
+        text += text_from_pdf
+
+    # Check which PDF files need OCR (based on empty text)
+    pdf_files_for_ocr = []
+    for temp_pdf_path, pdf_text in pdf_texts:
+        if not pdf_text:
+            pdf_files_for_ocr.append(temp_pdf_path)
+            logging.info(f"This is the size of the appended `pdf_files_for_ocr` list: {len(pdf_files_for_ocr)}")
+
+    # Perform OCR on the PDF files that need it
+    for temp_pdf_path in pdf_files_for_ocr:
+        text += ocr_on_pdf(temp_pdf_path)
+
+    logging.info(f"This is the size of the extracted text from the PDFs: {len(text)}")
+    return text
+
+
 
 # chunk size extracted text using LangChain's text splitter
 def get_text_chunks(text):
@@ -124,7 +170,6 @@ def handle_userinput(user_question):
             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
 
 
-
 def main():
     # Streamlit GUI - Page Configuration:
     st.set_page_config(page_title="Chat with Roland Gear PDF Manuals", page_icon=":notes:")
@@ -145,9 +190,6 @@ def main():
     if user_question:
         handle_userinput(user_question)
 
-    
-    # st.write(user_template.replace("{{MSG}}", "What's up, RoboChat?"), unsafe_allow_html=True) 
-    # st.write(bot_template.replace("{{MSG}}", "Hello Music Gear Lover, I'm here to answer your equipment questions!"), unsafe_allow_html=True)
     
     # adding a sidebar where the user can upload PDFs:
     with st.sidebar:

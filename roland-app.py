@@ -66,7 +66,6 @@ def ocr_on_pdf(pdf_path):
         return ""
 
 # extract text from PDF
-
 def get_pdf_text(pdf_docs):
     text = ""
     pdf_texts = [] 
@@ -91,13 +90,14 @@ def get_pdf_text(pdf_docs):
     for temp_pdf_path, pdf_text in pdf_texts:
         if not pdf_text:
             pdf_files_for_ocr.append(temp_pdf_path)
-            logging.info(f"This is the size of the appended `pdf_files_for_ocr` list: {len(pdf_files_for_ocr)}")
+            logging.info(f"This is the size of the appended `pdf_files_for_ocr` list: {len(pdf_files_for_ocr)}\n")
 
     # Perform OCR on the PDF files that need it
     for temp_pdf_path in pdf_files_for_ocr:
         text += ocr_on_pdf(temp_pdf_path)
+        logging.info(f"Performed OCR on this PDF file: {temp_pdf_path}\n")
 
-    logging.info(f"This is the size of the extracted text from the PDFs: {len(text)}")
+    logging.info(f"This is the size of the extracted text from the PDFs: {len(text)}\n")
     return text
 
 
@@ -112,7 +112,7 @@ def get_text_chunks(text):
     )
     chunks = text_splitter.split_text(text)
     return chunks
-    logging.debug(f"The ammount of chunks created is: {len(chunks)}")
+    logging.info(f"The ammount of chunks created is: {len(chunks)}")
 
 
 def get_vectorstore(text_chunks):
@@ -166,7 +166,6 @@ def handle_userinput(user_question):
         elif i % 2 != 0: # even messages for the Bot response
             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
 
-
 def main():
     # Streamlit GUI - Page Configuration:
     st.set_page_config(page_title="Chat with Roland Gear PDF Manuals", page_icon=":notes:")
@@ -194,20 +193,69 @@ def main():
         pdf_docs = st.file_uploader("Upload your PDFs here and click 'Process PDF'", accept_multiple_files=True)
         if st.button("Process PDF"):
             with st.spinner("Processing"):
-                # get pdf text
-                raw_text = get_pdf_text(pdf_docs)
+                # Create a progress bar
+                progress_text = "Processing PDFs..."
+                progress_bar = st.progress(0, text=progress_text)
                 
-                # get the text chunks
-                text_chunks = get_text_chunks(raw_text)
-                st.write(text_chunks)
+                # Calculate the total number of PDFs for processing
+                total_pdfs = len(pdf_docs)
                 
-                # create vector store embeddings with OpenAi (paid Option)
-                vectorstore = get_vectorstore(text_chunks)
+                # Iterate through each PDF and update the progress bar accordingly
+                for i, pdf in enumerate(pdf_docs):
+                    # Update progress bar
+                    progress_bar.progress((i + 1) / total_pdfs, text=progress_text)
+                    
+                    # Process PDF here
+                    raw_text = get_pdf_text([pdf])
+                    text_chunks = get_text_chunks(raw_text)
+                    vectorstore = get_vectorstore(text_chunks)
+                    st.session_state.conversation = get_conversation_chain(vectorstore)
+                
+                # Empty the progress bar after processing
+                progress_bar.empty()
 
-                # create conversation chain
-                # This conversation object takes the history of the conversation and returns the next element of the conversation
-                # `st.session_state` saves the conversation in a variable and tells streamlit to keep this in the session state, so the conversation memory is not lost during and changes in the GUI
-                st.session_state.conversation = get_conversation_chain(vectorstore)
+
+# def main():
+#     # Streamlit GUI - Page Configuration:
+#     st.set_page_config(page_title="Chat with Roland Gear PDF Manuals", page_icon=":notes:")
+    
+#     # Adding the CSS template here:
+#     st.write(css, unsafe_allow_html=True)
+
+#     if "conversation" not in st.session_state:
+#         st.session_state.conversation = None
+
+#     # Initializing Streamlit chat history session state
+#     if "chat_history" not in st.session_state:
+#         st.session_state.chat_history = None
+
+#     st.header("Chat with Roland Gear PDF Manuals :notes:")
+#     # Store the value from the user input question
+#     user_question = st.text_input("Ask me a question about any Roland music equipment that can be answered from one of the official manuals:")
+#     if user_question:
+#         handle_userinput(user_question)
+
+    
+#     # adding a sidebar where the user can upload PDFs:
+#     with st.sidebar:
+#         st.subheader("Your Roland Manuals")
+#         pdf_docs = st.file_uploader("Upload your PDFs here and click 'Process PDF'", accept_multiple_files=True)
+#         if st.button("Process PDF"):
+#             with st.spinner("Processing"):
+#                 # get pdf text
+#                 raw_text = get_pdf_text(pdf_docs)
+                
+#                 # get the text chunks
+#                 text_chunks = get_text_chunks(raw_text)
+#                 st.write(text_chunks)
+                
+#                 # create vector store embeddings with OpenAi 
+#                 vectorstore = get_vectorstore(text_chunks)
+
+#                 # create conversation chain
+#                 # This conversation object takes the history of the conversation and returns the next element of the conversation
+#                 # `st.session_state` saves the conversation in a variable and tells streamlit to keep this in the session state, so the conversation memory is not lost during and changes in the GUI
+#                 st.session_state.conversation = get_conversation_chain(vectorstore)
     
    
 

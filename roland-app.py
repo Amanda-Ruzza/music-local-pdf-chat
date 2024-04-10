@@ -1,7 +1,8 @@
 import logging
 import tempfile
 from time import sleep, time
-from os import getenv, getcwd, path 
+from os import getenv, getcwd, path
+from os.path import getsize
 import streamlit as st
 from dotenv import load_dotenv 
 from PyPDF2 import PdfReader
@@ -33,17 +34,11 @@ load_dotenv()
     # create docstrings for the functions
 
 # TODO:
-# Create a 'Clear Chat History' function/button
-
-# TODO:
 # Create a WEB URL PDF file input functionality
 
 # TODO:
 # Move the 'user question' + bot question functionalities from the html to ST, then create a spinning wheel inside the bot question box to let the user know that the bot is thinking
 
-# TODO:
-# Add time execution functionality and send the results to the logger
-    
 
 def ocr_on_pdf(pdf_path):
     try:
@@ -75,7 +70,12 @@ def get_pdf_text(pdf_docs):
         with tempfile.NamedTemporaryFile(delete=False) as temp_pdf:
             temp_pdf.write(pdf.read())
             temp_pdf_path = temp_pdf.name
-        
+
+        # Check if the PDF file is empty
+        if getsize(temp_pdf_path) == 0:
+            logging.warning(f"The PDF file '{pdf.name}' is empty.")
+            continue  # Skip processing empty PDF files
+
         pdf_reader = PdfReader(temp_pdf_path)
         text_from_pdf = ""
         for page in pdf_reader.pages:
@@ -163,6 +163,10 @@ def handle_userinput(user_question):
         elif i % 2 != 0: # even messages for the Bot response
             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
 
+# Function to clear chat history
+def clear_chat_history():
+    st.session_state.chat_history = None
+
 def main():
     prog_start_time = time()
     # Streamlit GUI - Page Configuration:
@@ -184,14 +188,26 @@ def main():
     if user_question:
         handle_userinput(user_question)
 
+    # Display "Clear Chat History" button
+    if st.button("Clear Chat History"):
+        clear_chat_history()
     
-    # adding a sidebar where the user can upload PDFs:
+    # Add a sidebar where the user can upload PDFs:
     with st.sidebar:
         st.subheader("Your Roland Manuals")
         pdf_docs = st.file_uploader("Upload your PDFs here and click 'Process PDF'", accept_multiple_files=True)
         if st.button("Process PDF"):
             with st.spinner("Processing"):
-                # Create a progress bar
+                # Create a placeholder to display text chunks
+                text_chunks_placeholder = st.empty()
+                
+                # Process PDF here and display text chunks
+                for pdf in pdf_docs:
+                    raw_text = get_pdf_text([pdf])
+                    text_chunks = get_text_chunks(raw_text)
+                    text_chunks_placeholder.write(text_chunks)  # Display text chunks
+
+                # Create a progress bar after displaying text chunks
                 progress_text = "Processing PDFs..."
                 progress_bar = st.empty()
                 
@@ -200,20 +216,21 @@ def main():
                 
                 # Iterate through each PDF and update the progress bar accordingly
                 for i, pdf in enumerate(pdf_docs):
-                # Calculate progress percentage
+                    # Calculate progress percentage
                     progress_percent = (i + 1) / total_pdfs
                 
-                # Update progress bar
+                    # Update progress bar
                     progress_bar.progress(progress_percent, text=progress_text)
                 
-                    
                     # Process PDF here
                     raw_text = get_pdf_text([pdf])
                     text_chunks = get_text_chunks(raw_text)
                     vectorstore = get_vectorstore(text_chunks)
                     st.session_state.conversation = get_conversation_chain(vectorstore)
+                    
                     # Add Progress Bar delay
                     sleep(4.0)
+                
                 # Empty the progress bar after processing
                 progress_bar.empty()
 
@@ -224,7 +241,6 @@ def main():
                 minutes, seconds = divmod(prog_execution_time, 60)
                 # Log execution time
                 logging.info(f"The script's execution time is: {int(minutes)} minutes and {seconds: .2f} seconds \n")
-                
 
     
 if __name__ == '__main__':

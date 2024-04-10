@@ -1,8 +1,7 @@
 import logging
 import tempfile
-from time import sleep
+from time import sleep, time
 from os import getenv, getcwd, path 
-from io import BytesIO, BufferedReader
 import streamlit as st
 from dotenv import load_dotenv 
 from PyPDF2 import PdfReader
@@ -49,7 +48,7 @@ load_dotenv()
 def ocr_on_pdf(pdf_path):
     try:
         pytesseract.pytesseract.tesseract_cmd = r"{}".format(getenv("TESSERACT_PATH"))
-        logging.info(f"Tesseract Path: {pytesseract.pytesseract.tesseract_cmd}")
+        logging.info(f"Tesseract Path: {pytesseract.pytesseract.tesseract_cmd}\n")
         # Convert PDF to images
         images = convert_from_path(pdf_path)
 
@@ -83,7 +82,7 @@ def get_pdf_text(pdf_docs):
             text_from_pdf += page.extract_text()
 
         pdf_texts.append((temp_pdf_path, text_from_pdf))
-        logging.info(f"This is the size of the appended `pdf_texts` list: {len(pdf_texts)}")
+        logging.info(f"This is the size of the appended `pdf_texts` list: {len(pdf_texts)}\n")
         text += text_from_pdf
 
     # Check which PDF files need OCR (based on empty text)
@@ -101,8 +100,6 @@ def get_pdf_text(pdf_docs):
     logging.info(f"This is the size of the extracted text from the PDFs: {len(text)}\n")
     return text
 
-
-
 # chunk size extracted text using LangChain's text splitter
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
@@ -115,14 +112,13 @@ def get_text_chunks(text):
     return chunks
     logging.info(f"The ammount of chunks created is: {len(chunks)}")
 
-
 def get_vectorstore(text_chunks):
     # check that text values are being passed:
     chunk_data_types = [type(c) for c in text_chunks]
-    logging.info(f"Data types in text_chunks: {chunk_data_types}")
+    logging.info(f"Data types in text_chunks: {chunk_data_types}\n")
     for c in text_chunks:
         if not isinstance (c, str):
-            raise TypeError(f"Chunk {c} is NOT a string ")
+            raise TypeError(f"Chunk {c} is NOT a string\n")
 
     # Instantiate the OpenAIEmbeddings Class
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
@@ -133,12 +129,12 @@ def get_vectorstore(text_chunks):
     db = PGVector.from_documents(
     embedding=embeddings,
     documents=documents_from_text_chunks,
-    collection_name=getenv("PGVECTOR_COLLECTION_NAME"), #using the os.getenv to load the env variables from the `.env` file
+    collection_name=getenv("PGVECTOR_COLLECTION_NAME"), 
     connection_string=getenv("PGVECTOR_CONNECTION_STRING"),
 )
     
     logging.debug("Creating vector store")
-    logging.debug(f"This is the amount of embeddings created: {len(documents_from_text_chunks)}")
+    logging.info(f"This is the amount of embeddings created: {len(documents_from_text_chunks)}\n")
     return db
 
 # creates a conversation chain
@@ -157,7 +153,7 @@ def handle_userinput(user_question):
     with get_openai_callback() as cb:
         response = st.session_state.conversation({"question": user_question})
         st.session_state.chat_history = response["chat_history"]
-        logging.info(f"This is the 'OpenAi Token Usage' information:\n {cb}")
+        logging.info(f"This is the 'OpenAi Token Usage' information:\n\t{cb}")
 
     # loop through the chat history with an index and the context of the index
     # adding the User + Bot CSS templates
@@ -168,6 +164,7 @@ def handle_userinput(user_question):
             st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
 
 def main():
+    prog_start_time = time()
     # Streamlit GUI - Page Configuration:
     st.set_page_config(page_title="Chat with Roland Gear PDF Manuals", page_icon=":notes:")
     
@@ -219,6 +216,15 @@ def main():
                     sleep(4.0)
                 # Empty the progress bar after processing
                 progress_bar.empty()
+
+                # Program execution time
+                prog_end_time = time()
+                prog_execution_time = prog_end_time - prog_start_time 
+                # Convert into minutes and seconds
+                minutes, seconds = divmod(prog_execution_time, 60)
+                # Log execution time
+                logging.info(f"The script's execution time is: {int(minutes)} minutes and {seconds: .2f} seconds \n")
+                
 
     
 if __name__ == '__main__':

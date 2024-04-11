@@ -39,8 +39,14 @@ load_dotenv()
 # TODO:
 # Move the 'user question' + bot question functionalities from the html to ST, then create a spinning wheel inside the bot question box to let the user know that the bot is thinking
 
+# Initialize session state
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
 
 def ocr_on_pdf(pdf_path):
+    """
+    Perform OCR on PDFs that cannot have their text extracted by PyPDF2
+    """
     try:
         pytesseract.pytesseract.tesseract_cmd = r"{}".format(getenv("TESSERACT_PATH"))
         logging.info(f"Tesseract Path: {pytesseract.pytesseract.tesseract_cmd}\n")
@@ -113,6 +119,10 @@ def get_text_chunks(text):
     logging.info(f"The ammount of chunks created is: {len(chunks)}")
 
 def get_vectorstore(text_chunks):
+    """
+    Convert the extracted text chunks into vectors and send them to the database
+    """
+
     # check that text values are being passed:
     chunk_data_types = [type(c) for c in text_chunks]
     logging.info(f"Data types in text_chunks: {chunk_data_types}\n")
@@ -137,8 +147,10 @@ def get_vectorstore(text_chunks):
     logging.info(f"This is the amount of embeddings created: {len(documents_from_text_chunks)}\n")
     return db
 
-# creates a conversation chain
 def get_conversation_chain(vectorstore):
+    """
+    Create a conversation chain
+    """
     llm = ChatOpenAI(model_name="gpt-4")
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     conversation_chain = ConversationalRetrievalChain.from_llm(
@@ -149,21 +161,42 @@ def get_conversation_chain(vectorstore):
     return conversation_chain
 
 def handle_userinput(user_question):
-    # track token usage:
-    with get_openai_callback() as cb:
-        response = st.session_state.conversation({"question": user_question})
-        st.session_state.chat_history = response["chat_history"]
-        logging.info(f"This is the 'OpenAi Token Usage' information:\n\t{cb}")
+    if st.session_state.chat_history is None:
+        # User has not uploaded any PDFs, so we need to handle the question accordingly
+        if st.session_state.vectorstore is None:
+            st.warning("Please upload PDFs first or wait until the database is initialized.")
+        else:
+            # User can ask questions based on the existing data in the database
+            # track token usage:
+            with get_openai_callback() as cb:
+                response = st.session_state.conversation({"question": user_question})
+                st.session_state.chat_history = response["chat_history"]
+                logging.info(f"This is the 'OpenAi Token Usage' information:\n\t{cb}")
 
-    # loop through the chat history with an index and the context of the index
-    # adding the User + Bot CSS templates
-    for i, message in enumerate(st.session_state.chat_history):
-        if i % 2 == 0: # Mod 2 for the odd messages
-            st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
-        elif i % 2 != 0: # even messages for the Bot response
-            st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+            # loop through the chat history with an index and the context of the index
+            # adding the User + Bot CSS templates
+            for i, message in enumerate(st.session_state.chat_history):
+                if i % 2 == 0: # Mod 2 for the odd messages
+                    st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+                elif i % 2 != 0: # even messages for the Bot response
+                    st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+    else:
+        # User has uploaded PDFs, so we can proceed with the conversation
+        # track token usage:
+        with get_openai_callback() as cb:
+            response = st.session_state.conversation({"question": user_question})
+            st.session_state.chat_history = response["chat_history"]
+            logging.info(f"This is the 'OpenAi Token Usage' information:\n\t{cb}")
 
-# Function to clear chat history
+        # loop through the chat history with an index and the context of the index
+        # adding the User + Bot CSS templates
+        for i, message in enumerate(st.session_state.chat_history):
+            if i % 2 == 0: # Mod 2 for the odd messages
+                st.write(user_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+            elif i % 2 != 0: # even messages for the Bot response
+                st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
+
+
 def clear_chat_history():
     st.session_state.chat_history = None
 
@@ -175,12 +208,17 @@ def main():
     # Adding the CSS template here:
     st.write(css, unsafe_allow_html=True)
 
-    if "conversation" not in st.session_state:
-        st.session_state.conversation = None
+    # Initialize vectorstore if not already initialized
+    if "vectorstore" not in st.session_state:
+        st.session_state.vectorstore = None
 
-    # Initializing Streamlit chat history session state
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = None
+    # Establish connection with PGVector database
+    vectorstore = get_vectorstore([])
+    st.session_state.vectorstore = vectorstore
+
+    # Initialize conversation chain if not already initialized
+    if "conversation" not in st.session_state or st.session_state.conversation is None:
+        st.session_state.conversation = get_conversation_chain(vectorstore)
 
     st.header("Chat with Roland Gear PDF Manuals :notes:")
     # Store the value from the user input question
@@ -226,6 +264,7 @@ def main():
                     raw_text = get_pdf_text([pdf])
                     text_chunks = get_text_chunks(raw_text)
                     vectorstore = get_vectorstore(text_chunks)
+                    st.session_state.vectorstore = vectorstore  # Store vectorstore in session state
                     st.session_state.conversation = get_conversation_chain(vectorstore)
                     
                     # Add Progress Bar delay

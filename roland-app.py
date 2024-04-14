@@ -11,7 +11,7 @@ from langchain.docstore.document import Document
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain_openai import ChatOpenAI
-from langchain.callbacks import get_openai_callback # this is for tracking the token usage
+from langchain_community.callbacks import get_openai_callback
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import PGVector
 from htmlTemplates import css, bot_template, user_template
@@ -30,14 +30,18 @@ logging.basicConfig(
 # Enable API Keys, DB + Tesseract connection strings from the `.env` file
 load_dotenv()
 
-# TODO:
-    # create docstrings for the functions
 
 # TODO:
 # Create a WEB URL PDF file input functionality
 
 # TODO:
+# RM unecessary packages from venv
+# refactor to use langchain community
+# create requirements.txt
+
+# TODO:
 # Move the 'user question' + bot question functionalities from the html to ST, then create a spinning wheel inside the bot question box to let the user know that the bot is thinking
+
 
 # Initialize session state
 if 'chat_history' not in st.session_state:
@@ -160,6 +164,7 @@ def get_conversation_chain(vectorstore):
     )
     return conversation_chain
 
+
 def handle_userinput(user_question):
     if st.session_state.chat_history is None:
         # User has not uploaded any PDFs, so we need to handle the question accordingly
@@ -168,7 +173,7 @@ def handle_userinput(user_question):
         else:
             # User can ask questions based on the existing data in the database
             # track token usage:
-            with get_openai_callback() as cb:
+            with get_openai_callback.invoke() as cb: #This is where I updated the 'invoke'
                 response = st.session_state.conversation({"question": user_question})
                 st.session_state.chat_history = response["chat_history"]
                 logging.info(f"This is the 'OpenAi Token Usage' information:\n\t{cb}")

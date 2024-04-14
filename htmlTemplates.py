@@ -7,8 +7,11 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Construct the relative path to the image file
 human_image_path = os.path.join(current_dir, "images", "musician_question.png")
+# print(human_image_path)
 
 human_avatar_image = Image.open(human_image_path)
+# human_avatar_image.show()
+
 
 css = '''
 <style>
@@ -46,6 +49,7 @@ bot_template = '''
     <div class="message">{{MSG}}</div>
 </div>
 '''
+
 
 
 user_template = '''

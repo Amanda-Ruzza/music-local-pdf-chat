@@ -20,6 +20,7 @@ It was designed to run in a local machine, with a focus on open-source tools and
 ## Features
 
 * A Langchain `callback` function that calculates 'OpenAi' token usage and prints it to a logger file
+* A 'script execution time' functionality printed to a logger file for future Cloud Development considerations
 * A secure API/TOKEN keys connection hidden in the `.env` file
 * A capability to answer questions based on documents that are already vectorized and stored in the database - no need to reupload the same PDFs
 * A 'Clear Chat History' button
@@ -35,6 +36,8 @@ It was designed to run in a local machine, with a focus on open-source tools and
 - - - -
 
 #### Instructions
+
+* Install the `tesseract cli` in your local machine
 
 * Activate local `virtual environment` on terminal:
 

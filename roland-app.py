@@ -34,10 +34,6 @@ load_dotenv()
 # TODO:
 # Create a WEB URL PDF file input functionality
 
-# TODO:
-# RM unecessary packages from venv
-# refactor to use langchain community
-# create requirements.txt
 
 # TODO:
 # Move the 'user question' + bot question functionalities from the html to ST, then create a spinning wheel inside the bot question box to let the user know that the bot is thinking
@@ -173,7 +169,7 @@ def handle_userinput(user_question):
         else:
             # User can ask questions based on the existing data in the database
             # track token usage:
-            with get_openai_callback.invoke() as cb: #This is where I updated the 'invoke'
+            with get_openai_callback() as cb: #This is where I updated the 'invoke'
                 response = st.session_state.conversation({"question": user_question})
                 st.session_state.chat_history = response["chat_history"]
                 logging.info(f"This is the 'OpenAi Token Usage' information:\n\t{cb}")
@@ -203,6 +199,7 @@ def handle_userinput(user_question):
 
 
 def clear_chat_history():
+    logging.info("Clearing the chat history because the user pressed the 'Clear Chat History Button'\n")
     st.session_state.chat_history = None
 
 def main():

@@ -197,10 +197,11 @@ def handle_userinput(user_question):
             elif i % 2 != 0: # even messages for the Bot response
                 st.write(bot_template.replace("{{MSG}}", message.content), unsafe_allow_html=True)
 
-
 def clear_chat_history():
     logging.info("Clearing the chat history because the user pressed the 'Clear Chat History Button'\n")
-    st.session_state.chat_history = None
+    st.session_state.chat_history = [] # Clear chat history list
+    st.session_state.conversation = None # Reset the conversation chain
+    st.rerun()
 
 def main():
     prog_start_time = time()

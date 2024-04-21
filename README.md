@@ -61,7 +61,7 @@ docker run --name pgvector-demo -e POSTGRES_PASSWORD=<your_database_connection_p
     `source roland_venv/bin/activate`
 
 * Install the required packages
-* **Note**: Because Langchain APIs are constantly being updated, it's important to use the exact package versions listed below :arrow_down:, otherwise this application might encounter erros in its functionality
+* **Note**: Because Langchain APIs are constantly being updated, it's important to use the exact package versions listed below :arrow_down:, otherwise this application might encounter errors in its functionality
 
 * Start the `streamlit` application on terminal:
 

@@ -5,15 +5,15 @@ A PDF Chatbot Application for reading Music Equipment Instruction Manuals :robot
 
 ## Application
 
-This is a Python Retrieval-Augmented Generation (RAG) application that is able to read multiple PDFs and answer questions inputed into the 'input question' box.
-It was designed as a POC to be ran in a local machine, with a focus on open-source tools and uses the following stack:
+This Python Retrieval-Augmented Generation (RAG) application is able to read multiple PDFs - up to 200MB at a time - and answer questions inputed into the 'input question' box.
+It was designed as a 'Proof Of Concept' to be ran in a local machine, with a focus on open-source tools. Application stack:
 
-* Streamlit - Front End
-* OpenAi - LLM
-* Langchain - Orchestration
-* PyPDF2 - PDF text extraction
-* PyTesseract - OCR on AES Encrypted PDFs or PDFs with images in the background that would result in an empty text extraction
-* PostgreSQL with the `pgvector` extension - Vector Database
+* **Streamlit** - Front End
+* **OpenAi** - LLM
+* **Langchain** - Orchestration
+* **PyPDF2** - PDF text extraction
+* **PyTesseract** - OCR on AES Encrypted PDFs or PDFs with images in the background that would result in an empty text extraction
+* **PostgreSQL** with the `pgvector` extension - Vector Database
   
 ![pgvector-screenshot](images/pgvector-vectorized-text-screenshot.png)
 

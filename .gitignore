@@ -7,6 +7,9 @@
 # JPG files:
 *.jpg
 
+# test images:
+musician_question.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

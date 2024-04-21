@@ -30,15 +30,6 @@ logging.basicConfig(
 # Enable API Keys, DB + Tesseract connection strings from the `.env` file
 load_dotenv()
 
-
-# TODO:
-# Create a WEB URL PDF file input functionality
-
-
-# TODO:
-# Move the 'user question' + bot question functionalities from the html to ST, then create a spinning wheel inside the bot question box to let the user know that the bot is thinking
-
-
 # Initialize session state
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
@@ -206,7 +197,7 @@ def clear_chat_history():
 def main():
     prog_start_time = time()
     # Streamlit GUI - Page Configuration:
-    st.set_page_config(page_title="Chat with Roland Gear PDF Manuals", page_icon=":notes:")
+    st.set_page_config(page_title="Chat with Music Gear Manuals", page_icon=":notes:")
     
     # Adding the CSS template here:
     st.write(css, unsafe_allow_html=True)
@@ -223,9 +214,9 @@ def main():
     if "conversation" not in st.session_state or st.session_state.conversation is None:
         st.session_state.conversation = get_conversation_chain(vectorstore)
 
-    st.header("Chat with Roland Gear PDF Manuals :notes:")
+    st.header("Chat with Music Gear Manuals :notes:")
     # Store the value from the user input question
-    user_question = st.text_input("Ask me a question about any Roland music equipment that can be answered from one of the official manuals:")
+    user_question = st.text_input("Ask me a question about any music equipment that can be answered from the manufacturer's official manual:")
     if user_question:
         handle_userinput(user_question)
 
@@ -235,7 +226,7 @@ def main():
     
     # Add a sidebar where the user can upload PDFs:
     with st.sidebar:
-        st.subheader("Your Roland Manuals")
+        st.subheader("Your PDF Manuals")
         pdf_docs = st.file_uploader("Upload your PDFs here and click 'Process PDF'", accept_multiple_files=True)
         if st.button("Process PDF"):
             with st.spinner("Processing"):

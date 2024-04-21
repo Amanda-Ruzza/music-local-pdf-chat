@@ -8,7 +8,7 @@
 *.jpg
 
 # test images:
-musician_question.png
+"musician_question.png"
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

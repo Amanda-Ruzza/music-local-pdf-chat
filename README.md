@@ -5,7 +5,7 @@ A PDF Chatbot Application for reading Music Equipment Instruction Manuals :robot
 
 ## Application
 
-This is a Python Retrieval-Augmented Generation (RAG) that is able to read multiple PDFs and answer questions inputed into the 'input question' box.
+This is a Python Retrieval-Augmented Generation (RAG) application that is able to read multiple PDFs and answer questions inputed into the 'input question' box.
 It was designed as a POC to be ran in a local machine, with a focus on open-source tools and uses the following stack:
 
 * Streamlit - Front End
@@ -26,6 +26,7 @@ It was designed as a POC to be ran in a local machine, with a focus on open-sour
 * A `script execution time` functionality printed to a logger file for future Cloud Development considerations.
 * A secure API/TOKEN keys connection hidden in the `.env` file
 * Capability to answer questions based on documents that are already vectorized and stored in the database - no need to reupload the same PDFs.
+* Ability to extract text from AES locked PDFs or PDFs with background images that block a simple text extraction.
 * A 'Clear Chat History' button.
 
 - - - -
@@ -35,7 +36,7 @@ It was designed as a POC to be ran in a local machine, with a focus on open-sour
 * Create a 'Web URL Input' functionality, so that the user has the option to either upload a file or add a PDF web url.
 * Create a 'document uploaded' metadata JSON file that will be sent into a NoSQL database so that there is a record of all the PDFs previously vectorized, so that the user can view a list of these PDFs and ask questions about them.
 * Create a drop down box in the UI, so that the user can view these available PDF file names.
-* Cloud Native Deployment.
+* Cloud Native Deployment on AWS and GCP.
   
 - - - -
 

@@ -1,6 +1,9 @@
 # Music Pdf Chat
 
 A PDF Chatbot Application for reading Music Equipment Instruction Manuals :robot:
+
+![music-demo](images/music-rag-demo-v2.gif)
+
 - - - -
 
 ## Application
@@ -12,6 +15,7 @@ It was designed as a 'Proof Of Concept' to be ran in a local machine, with a foc
 * **OpenAi** - LLM
 * **Langchain** - Orchestration
 * **PyPDF2** - PDF text extraction
+* **PyCryptodome** - for handling AES Encrypted PDFs being processed by `PyPDF2`
 * **PyTesseract** - OCR on AES Encrypted PDFs or PDFs with images in the background that would result in an empty text extraction
 * **PostgreSQL** with the `pgvector` extension - Vector Database
   
@@ -84,6 +88,7 @@ pdf2image                 1.17.0
 pgvector                  0.2.5
 SQLAlchemy                2.0.27
 streamlit                 1.33.0
+pycryptodome              3.20.0
 PyPDF2                    3.0.1
 pytesseract               0.3.10
 python-dotenv             1.0.1

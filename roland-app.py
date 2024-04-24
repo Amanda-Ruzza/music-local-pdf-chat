@@ -19,7 +19,7 @@ from pdf2image import convert_from_path
 import pytesseract
 
 
-log_file_path = path.join(getcwd(), "roland-app-logs.log")
+log_file_path = path.join(getcwd(), "music-app-logs.log")
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",

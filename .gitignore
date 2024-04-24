@@ -6,7 +6,7 @@
 
 # JPG files:
 *.jpg
-
+*.gif
 # test images:
 "musician_question.png"
 

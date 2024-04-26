@@ -57,7 +57,7 @@ It was designed as a **'Proof Of Concept'** to be ran in a local machine, with a
 Pull the `pgvector` [Docker image](https://hub.docker.com/r/ankane/pgvector), [enable the pgvector extension](https://github.com/pgvector/pgvector) on the PostgreSQL database, and run the Docker container locally with this command:
 
 ```
-docker run --name pgvector-demo -e POSTGRES_PASSWORD=<your_database_connection_password> -p 5432:5432 -d ankane/pgvector
+docker run --name <your-database-name> -e POSTGRES_PASSWORD=<your_database_connection_password> -p 5432:5432 -d ankane/pgvector
 ```
 
 ![docker-screenshot](images/docker-container-screenshot.png)

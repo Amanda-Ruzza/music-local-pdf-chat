@@ -1,25 +1,30 @@
 # Music Pdf Chat
 
-A PDF Chatbot Application for reading Music Equipment Instruction Manuals :robot:
+A PDF Chatbot Application for reading Music Equipment Instruction Manuals :robot: 
 
-![music-demo](images/music-rag-demo-v2.gif)
+
+![music-demo](images/music-rag-demo-v3.gif)
 
 - - - -
 
 ## Application
 
+<span style="color:darkblue">*version = 1.0.0*</span>
+
 This Python Retrieval-Augmented Generation (RAG) application is able to read multiple PDFs - up to 200MB at a time - and answer questions inputed into the 'input question' box.
-It was designed as a 'Proof Of Concept' to be ran in a local machine, with a focus on open-source tools. Application stack:
+It was designed as a **'Proof Of Concept'** to be ran in a local machine, with a focus on open-source tools. Application stack:
 
 * **Streamlit** - Front End
-* **OpenAi** - LLM
+* **OpenAi** - LLM/Foundation Model
 * **Langchain** - Orchestration
+* **Dotenv** - local secret management
 * **PyPDF2** - PDF text extraction
 * **PyCryptodome** - for handling AES Encrypted PDFs being processed by `PyPDF2`
 * **PyTesseract** - OCR on AES Encrypted PDFs or PDFs with images in the background that would result in an empty text extraction
 * **PostgreSQL** with the `pgvector` extension - Vector Database
   
 ![pgvector-screenshot](images/pgvector-vectorized-text-screenshot.png)
+
 
 - - - -
 

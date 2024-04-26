@@ -6,9 +6,12 @@
 
 # JPG files:
 *.jpg
-*.gif
+
 # test images:
 "musician_question.png"
+
+# video demo files:
+*.mp4
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

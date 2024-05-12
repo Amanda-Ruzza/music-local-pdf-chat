@@ -12,6 +12,7 @@ A Python application that allows users to ask questions about music equipment in
 <span style="color:darkblue">*version = 1.0.0*</span>
 
 This Python Retrieval-Augmented Generation (RAG) application is able to read multiple PDFs - up to 200MB at a time - and answer questions based on the information in those PDFs. In simpler terms, it can find relevant information from the PDFs and use that information to answer your questions.
+
 It was designed as a **'Proof Of Concept'** to be ran in a local machine, with a focus on open-source tools. Application stack:
 
 * **Streamlit** - Front End

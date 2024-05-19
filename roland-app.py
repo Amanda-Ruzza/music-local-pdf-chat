@@ -3,20 +3,22 @@ import tempfile
 from time import sleep, time
 from os import getenv, getcwd, path
 from os.path import getsize
+
 import streamlit as st
 from dotenv import load_dotenv 
 from PyPDF2 import PdfReader
-from langchain.text_splitter import  CharacterTextSplitter
+from pdf2image import convert_from_path
+import pytesseract
+
+from langchain.text_splitter import CharacterTextSplitter
 from langchain.docstore.document import Document
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.callbacks import get_openai_callback
-from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import PGVector
+
 from htmlTemplates import css, bot_template, user_template
-from pdf2image import convert_from_path
-import pytesseract
 
 
 log_file_path = path.join(getcwd(), "music-app-logs.log")
@@ -41,9 +43,10 @@ def ocr_on_pdf(pdf_path):
     try:
         pytesseract.pytesseract.tesseract_cmd = r"{}".format(getenv("TESSERACT_PATH"))
         logging.info(f"Tesseract Path: {pytesseract.pytesseract.tesseract_cmd}\n")
+        
         # Convert PDF to images
         images = convert_from_path(pdf_path)
-
+        
         # Initialize an empty string to store the extracted text
         extracted_text = ""
 
@@ -53,48 +56,59 @@ def ocr_on_pdf(pdf_path):
             extracted_text += text + '\n'
 
         return extracted_text
+    
+    except FileNotFoundError as fnf_error:
+        logging.error(f"File not found: {pdf_path}. Error: {fnf_error}")
+    except pytesseract.TesseractError as tess_error:
+        logging.error(f"Tesseract OCR failed. Error: {tess_error}")
     except Exception as e:
-        logging.error(f"Error converting PDF to images: {e}")
-        return ""
+        logging.error(f"Unexpected error during OCR on PDF: {pdf_path}. Error: {e}")
+    return ""
 
-# extract text from PDF
 def get_pdf_text(pdf_docs):
     text = ""
     pdf_texts = [] 
 
     for pdf in pdf_docs:
-        # Save the contents of the uploaded PDF to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False) as temp_pdf:
-            temp_pdf.write(pdf.read())
-            temp_pdf_path = temp_pdf.name
+        try:
+            # Save the contents of the uploaded PDF to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False) as temp_pdf:
+                temp_pdf.write(pdf.read())
+                temp_pdf_path = temp_pdf.name
 
-        # Check if the PDF file is empty
-        if getsize(temp_pdf_path) == 0:
-            logging.warning(f"The PDF file '{pdf.name}' is empty.")
-            continue  # Skip processing empty PDF files
+            # Check if the PDF file is empty
+            if getsize(temp_pdf_path) == 0:
+                logging.warning(f"The PDF file '{pdf.name}' is empty.")
+                continue  # Skip processing empty PDF files
 
-        pdf_reader = PdfReader(temp_pdf_path)
-        text_from_pdf = ""
-        for page in pdf_reader.pages:
-            text_from_pdf += page.extract_text()
+            pdf_reader = PdfReader(temp_pdf_path)
+            text_from_pdf = ""
+            for page in pdf_reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_from_pdf += page_text
 
-        pdf_texts.append((temp_pdf_path, text_from_pdf))
-        logging.info(f"This is the size of the appended `pdf_texts` list: {len(pdf_texts)}\n")
+            pdf_texts.append((temp_pdf_path, text_from_pdf))
+            logging.info(f"Appended text from PDF: {pdf.name}. Total PDFs processed: {len(pdf_texts)}")
+
+        except FileNotFoundError as fnf_error:
+            logging.error(f"File not found: {pdf.name}. Error: {fnf_error}")
+        except Exception as e:
+            logging.error(f"Error processing PDF: {pdf.name}. Error: {e}")
+            continue
+
         text += text_from_pdf
 
     # Check which PDF files need OCR (based on empty text)
-    pdf_files_for_ocr = []
-    for temp_pdf_path, pdf_text in pdf_texts:
-        if not pdf_text:
-            pdf_files_for_ocr.append(temp_pdf_path)
-            logging.info(f"This is the size of the appended `pdf_files_for_ocr` list: {len(pdf_files_for_ocr)}\n")
+    pdf_files_for_ocr = [pdf_path for pdf_path, pdf_text in pdf_texts if not pdf_text]
+    logging.info(f"PDF files requiring OCR: {len(pdf_files_for_ocr)}")
 
     # Perform OCR on the PDF files that need it
     for temp_pdf_path in pdf_files_for_ocr:
         text += ocr_on_pdf(temp_pdf_path)
-        logging.info(f"Performed OCR on this PDF file: {temp_pdf_path}\n")
+        logging.info(f"Performed OCR on PDF: {temp_pdf_path}")
 
-    logging.info(f"This is the size of the extracted text from the PDFs: {len(text)}\n")
+    logging.info(f"Total extracted text length: {len(text)}")
     return text
 
 # chunk size extracted text using LangChain's text splitter
